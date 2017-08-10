@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Welcome</title>
+</head>
+<script src="/socket.io/socket.io.js"></script>
+<script>
+    var socket = io();
+    var user;
+    var sessionjoinees;
+    var joinees = '';
+
+
+    function createNewSession() {
+       
+        // Generate unique id for the room
+        var id = Math.round((Math.random() * 1000000));
+        socket.emit('createnewsession', id);
+    }
+    socket.on('connectToRoom', function (data) {
+          window.location.href = '/coderpad.html?sessionid='+data;        
+      });
+
+</script>
+
+<body>
+    
+    <button type="button" name="button" onclick="createNewSession()">Create New Session</button>
+</body>
+
+</html>

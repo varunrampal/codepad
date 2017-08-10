@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Coder Pad</title>
+</head>
+<script src="/socket.io/socket.io.js"></script>
+<script>
+    var socket = io();
+    var user = '';
+    var sessionjoinees;
+    
+
+    function setUsername() {
+
+        var session_id = document.getElementById('span_sessionid').innerText;//getUrlVar('sessionid');
+
+        if (session_id.length > 0) {
+
+            var name = document.getElementById('name').value;
+            if (name == '') {
+                document.getElementById('error-container').innerHTML = 'Please enter your name';
+
+            }
+            else {
+                socket.emit('setUsername', { username: name, sessionid: session_id });
+
+            }
+        }
+        else {
+            document.getElementById('error-container').innerHTML = 'session id of a session to join is missing in the url';
+        }
+    };
+
+    socket.on('userExists', function (data)
+     {
+        
+        document.getElementById('error-container').innerHTML = data;
+    });
+
+    socket.on('userSet', function (data) {
+
+        user = data.username;
+        document.getElementById('usercode').value = data.sourcecode;        
+    });
+
+    socket.on('joineduserset', function (data) {
+
+        document.getElementById('divcodepadarea').style = 'display:block';
+        document.getElementById('divnewsession').style = 'display:none';
+        document.getElementById('divjoinsession').style = 'display:none';
+
+        sessionjoinees = data.sessionjoinees;
+
+        console.log(sessionjoinees);
+       
+        var joinees = '';
+        
+        for (var i in sessionjoinees) {
+            joinees = joinees + ' | ' + sessionjoinees[i];
+        }
+        document.getElementById('users-container').innerText = joinees;
+    });
+
+    socket.on('newmsg', function (data) {
+       // console.log(data);
+      
+        if (user) {
+            document.getElementById('message-container').innerHTML += '<div><b>' + data.sentbyuser + '</b>: <br/>' + data.outputmessage + '</div>'
+        }
+    });
+
+    socket.on('usercodechanged', function (data) {
+        document.getElementById('usercode').value = data.code;
+    });
+
+
+    socket.on('sessionalreadyrunnig', function (data) {
+        document.getElementById('error-container').innerHTML = data.message;
+    });
+
+    socket.on('connectToRoom', function (data) {
+        document.getElementById('divnewsession').style = 'display:none';
+        document.getElementById('divjoinsession').style = 'display:block';
+        document.getElementById('span_sessionid').innerText = data;
+        document.getElementById('span_finalsessionid').innerText = data;
+    });
+
+    socket.on('sessionnotrunning', function (data) {
+        document.getElementById('error-container').innerHTML = data.message;
+    });
+
+    function sendMessage() {
+        var usercode = document.getElementById('usercode').value;
+        var sessionid = document.getElementById('span_finalsessionid').innerText;
+        socket.emit('msg', { message: usercode, user: user, sessionid:sessionid });
+    }
+
+    function broadcastcode() {
+        var usercode = document.getElementById('usercode').value;
+        var session_id = document.getElementById('span_finalsessionid').innerText;//getUrlVar('sessionid');
+        socket.emit('usercode', { code: usercode, sessionid: session_id });
+    }
+
+    function getUrlVar(key) {
+        var result = new RegExp(key + "=([^&]*)", "i").exec(window.location.search);
+        return result && unescape(result[1]) || "";
+    }
+
+    function createNewSession() {
+        // Generate unique id for the room
+        var id = Math.round((Math.random() * 1000000));
+        socket.emit('createnewsession', id);
+    }
+
+    function joinExistingSession() {
+        var sessionid = document.getElementById('sessionid').value;
+        socket.emit('joinexistingsession', sessionid);
+
+    }
+
+</script>
+
+<body>
+    <div id="error-container"></div>
+
+    <div id="divnewsession">
+        <div>
+            <div>Create New Session</div>
+            <div> <button type="button" name="button" onclick="createNewSession()">Create</button></div>
+
+        </div>
+        <br/>
+        OR
+        <br/>
+        <div>
+            <div>Join Existing Session</div>
+            <div><input id="sessionid" type="text" name="sessionid" value="" placeholder="Enter sessionid!"></div>
+            <div> <button type="button" name="button" onclick="joinExistingSession()">Join</button></div>
+        </div>
+    </div>
+
+
+    <div id="divjoinsession" style="display:none;">
+        sessionid: <span id="span_sessionid"></span>
+        <input id="name" type="text" name="name" value="" placeholder="Enter your name!">
+        <button type="button" name="button" onclick="setUsername()">Go!</button>
+    </div>
+
+    <div id="divcodepadarea" style="display:none">
+        sessionid: <span id="span_finalsessionid"></span>
+        <textarea name="usercode" id="usercode" onkeyup="broadcastcode()" rows="5" cols="100"></textarea>
+        <button type="button" name="button" onclick="sendMessage()">Run</button>
+        <div id="message-container"></div>
+        <div id="users-container"></div>
+    </div>
+
+</body>
+
+</html>

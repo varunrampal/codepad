@@ -1,0 +1,15 @@
+{
+  "name": "sockettest",
+  "version": "1.0.0",
+  "description": "A project to learn socket.IO",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Surender Singh",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.15.3",
+    "socket.io": "^2.0.3"
+  }
+}
